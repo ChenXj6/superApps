@@ -1,7 +1,7 @@
 <template>
   <div class="p20">
     <p class="logo">
-      <img :src="logoimg" alt />
+      <img class="logoImg" :src="logoimg" alt />
     </p>
       <input type="password" style="display: none;">
     <div class="memberset">
@@ -18,13 +18,13 @@
         <input type="text" v-model="zcdata.nickname" :placeholder="$t('m.registerpage.register3')" />
       </p>
       <p>
-        <i class="el-icon-phone"></i>
-        <input type="number" v-model="zcdata.mobile" maxlength="11" :placeholder="$t('m.registerpage.register4')" />
+        <i class="el-icon-phone"></i>91
+        <input type="text" v-model="zcdata.mobile" maxlength="18" :placeholder="$t('m.registerpage.register4')" />
       </p>
       <p class="f-flex">
         <i class="el-icon-orange"></i>
         <input type="text" v-model="zcdata.code" :placeholder="$t('m.registerpage.register5')" />
-        <el-button type="primary" @click="getcode" :disabled="iscode">{{iscode?$t('m.registerpage.register6'):$t('m.registerpage.register7')}} </el-button>
+        <el-button type="primary" @click="getcode" :disabled="iscode">{{countDown}}</el-button>
       </p>
       <p>
         <i class="el-icon-lock"></i>
@@ -40,7 +40,9 @@
       <div class="golog"><span @click="gologin">{{$t('m.registerpage.register11')}}</span></div>
       <div class="golog"><span><a :href="loginUrl" style="color:#5d70bd">{{$t('m.loginpage.login11')}}</a></span></div>
      <p>
-       <a href="https://fenfa666.com/s/6416">{{$t('m.registerpage.register12')}}</a> 
+        <!-- <a href="http://www.nicejobsapp.com/nicejobsapp.apk">{{$t('m.registerpage.register12')}}</a>  -->
+        <a href="https://app.greatshop.vip/greatshop.apk">{{$t('m.registerpage.register12')}}</a> 
+      
      </p>
     </div>
   </div>
@@ -60,7 +62,11 @@ export default {
           },
           iscode:false,
           logoimg:'',
-          loginUrl:''
+          loginUrl:'',
+          timer: null,
+          outTime: 60,
+          countDown: this.$t('m.registerpage.register7'),
+          lang: 'en-US',
         }
     },
     mounted(){
@@ -77,63 +83,68 @@ export default {
         this.$router.push({name:'login'})
       },
           reister(){
-      var isMobile = /^1[3|4|5|6|7|8|9][0-9]{9}$/;
-
+            let that = this;
             //  if(this.zcdata.incode==''){
             //      this.$toast('请输入推荐人ID')
             //      return;
             //  }
-            if(this.zcdata.nickname==''){
-                 this.$toast(this.$t('m.registerpage.register13'))
+            if(that.zcdata.nickname==''){
+                 that.$toast(that.$t('m.registerpage.register13'))
                  return;
              }
-              if(this.zcdata.mobile==''){
-                 this.$toast(this.$t('m.registerpage.register14'))
+              if(that.zcdata.mobile==''){
+                 that.$toast(that.$t('m.registerpage.register14'))
                  return;
              }
-               if(!isMobile.test(this.zcdata.mobile)){
-                 this.$toast(this.$t('m.registerpage.register15'))
+              if(that.zcdata.code==''){
+                 that.$toast(that.$t('m.registerpage.register16'))
                  return;
              }
-              if(this.zcdata.code==''){
-                 this.$toast(this.$t('m.registerpage.register16'))
+              if(that.zcdata.password==''){
+                 that.$toast(that.$t('m.registerpage.register17'))
                  return;
              }
-              if(this.zcdata.password==''){
-                 this.$toast(this.$t('m.registerpage.register17'))
+              if(that.zcdata.password!=that.zcdata.password1){
+                 that.$toast(that.$t('m.registerpage.register18'))
                  return;
              }
-              if(this.zcdata.password!=this.zcdata.password1){
-                 this.$toast(this.$t('m.registerpage.register18'))
-                 return;
-             }
-             
-             this.$api.Post('register',this.zcdata).then(res=>{
-              
-                 this.$toast(res.result.message)
+             that.$api.Post('register',that.zcdata).then(res=>{
+                 that.$toast(res.result.message)
                  if(res.status==1){
-                     localStorage.setItem('mobile',this.zcdata.mobile)
+                     localStorage.setItem('mobile',that.zcdata.mobile)
                      this.$router.push('/')
                  }
              })
           },
           //获取验证码
           getcode(){
-              // var isMobile = /^1[3|4|5|6|7|8|9][0-9]{9}$/;
-             if(this.zcdata.mobile==''){
+             if(this.zcdata.mobile== ''){
                  this.$toast(this.$t('m.registerpage.register19'))
                  return;
              }
-            //    if(!isMobile.test(this.zcdata.mobile)){
-            //      this.$toast(this.$t('m.registerpage.register20'))
-            //      return;
-            //  }
-               this.$api.Post('sendcode',{mobile:this.zcdata.mobile}).then(res=>{
+            this.$api.Post('sendcode',{mobile:this.zcdata.mobile}).then(res=>{
                  this.$toast(res.result.message)
                  if(res.status==1){
-                      this.iscode=true
+                      this.iscode=true;
+                      this.lang = localStorage.getItem('language')
+                      if(!this.timer){
+                        this.timer = setInterval(()=>{
+                          if (this.lang == 'en-US' || 'en') {
+                            this.countDown = this.$t('m.registerpage.register22') + ' ' + this.outTime + 's';
+                          } else {
+                            this.countDown = this.outTime + this.$t('m.registerpage.register22');
+                          }
+                          this.outTime -= 1;
+                          if (this.outTime < 0) {
+                          clearInterval(this.timer);
+                          this.countDown = this.$t('m.registerpage.register7');
+                          this.outTime = 60;
+                          this.timer = null;
+                          this.iscode = false;
+              }
+                        },1000)
+                      }
                  }
-
             })
           
           },
@@ -165,11 +176,13 @@ export default {
 
 <style lang="less">
 .logo {
+  position: relative;
   text-align: center;
-  margin: 1rem auto;
+  margin: 20px auto;
 }
-.logo img {
-  width: 100px;
+.logoImg{
+  display: inline-block;
+  width: 270px !important;
 }
 .memberset {
   color: #58a1eb;
